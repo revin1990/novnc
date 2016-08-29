@@ -203,6 +203,7 @@ var UI;
             try {
                 UI.rfb = new RFB({'target': document.getElementById('noVNC_canvas'),
                                   'onUpdateState': UI.updateState,
+                                  'onPasswordRequired': UI.passwordRequired,
                                   'onXvpInit': UI.updateXvpButton,
                                   'onClipboard': UI.clipboardReceive,
                                   'onFBUComplete': UI.initialResize,
@@ -286,22 +287,15 @@ var UI;
                 case 'loaded':
                     klass = "noVNC_status_normal";
                     break;
-                case 'password':
-                    UI.toggleConnectPanel();
-
-                    document.getElementById('noVNC_connect_button').value = "Send Password";
-                    document.getElementById('noVNC_connect_button').onclick = UI.setPassword;
-                    document.getElementById('noVNC_setting_password').focus();
-
-                    klass = "noVNC_status_warn";
-                    break;
                 default:
                     klass = "noVNC_status_warn";
                     break;
             }
 
+            document.getElementById('noVNC_control_bar')
+                .setAttribute("class", klass);
+
             if (typeof(msg) !== 'undefined') {
-                document.getElementById('noVNC_control_bar').setAttribute("class", klass);
                 document.getElementById('noVNC_status').innerHTML = msg;
             }
 
@@ -761,6 +755,29 @@ var UI;
             // Don't display the connection settings until we're actually disconnected
         },
 
+/* ------^-------
+ *  /CONNECTION
+ * ==============
+ *   PASSWORD
+ * ------v------*/
+
+        passwordRequired: function(rfb, msg) {
+            UI.connSettingsOpen = false;
+            UI.toggleConnectPanel();
+
+            document.getElementById('noVNC_connect_button')
+                .value = "Send Password";
+            document.getElementById('noVNC_connect_button')
+                .onclick = UI.setPassword;
+            document.getElementById('noVNC_setting_password').focus();
+
+            if (typeof msg === 'undefined') {
+                msg = "Password is required";
+            }
+            UI.popupStatus(msg);
+            UI.updateState(null, "warning", null, msg);
+        },
+
         setPassword: function() {
             UI.rfb.sendPassword(document.getElementById('noVNC_setting_password').value);
             //Reset connect button.
@@ -772,7 +789,7 @@ var UI;
         },
 
 /* ------^-------
- *  /CONNECTION
+ *  /PASSWORD
  * ==============
  *   FULLSCREEN
  * ------v------*/
